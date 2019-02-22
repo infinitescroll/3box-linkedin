@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from 'react';
+import React, { useState, Fragment } from 'react';
 import Box from '3box';
 import { Main, AppBar, Card, Text, Field, Button } from '@aragon/ui';
 import './App.css';

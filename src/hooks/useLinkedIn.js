@@ -8,7 +8,7 @@ const useLinkedIn = (auth, setAuth, box, setBox) => {
       setAuth(true);
       const linkedInCode = urlParams[1];
       axios
-        .post(`http://localhost:8080/auth?code=${linkedInCode}`)
+        .post(`http://localhost:8080/linkedin/auth?code=${linkedInCode}`)
         .then(response => {
           setBox({
             ...box,

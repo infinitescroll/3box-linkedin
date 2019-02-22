@@ -15,7 +15,7 @@ const use3Box = (account, box, setBox) => {
   const getBox = async () => {
     if (box.loading && account) {
       const hasBox = await checkForBox(account);
-      if (!hasBox) setBox({ ...box, hasBox: false, loading: false });
+      if (!hasBox) setBox({ ...box, loading: false });
       else {
         const openedBox = await Box.openBox(
           account,
