@@ -98,6 +98,7 @@ const App = () => {
                 >
                   Create a 3Box with LinkedIn
                 </Button>
+                <br />
                 <Button
                   onClick={saveBox}
                   style={{ marginBottom: '10px' }}

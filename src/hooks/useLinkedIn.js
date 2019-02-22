@@ -10,7 +10,12 @@ const useLinkedIn = (auth, setAuth, box, setBox) => {
       axios
         .post(`http://localhost:8080/auth?code=${linkedInCode}`)
         .then(response => {
-          setBox({ ...box, hasBox: true, name: response.data.name });
+          setBox({
+            ...box,
+            hasBox: true,
+            loading: false,
+            name: response.data.name,
+          });
         })
         .catch(console.error);
     }
