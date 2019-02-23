@@ -11,7 +11,7 @@ const App = () => {
 
   useMetaMask(setAccount);
 
-  const [box, setBox] = useState({ loading: true });
+  const [box, setBox] = useState({});
 
   use3Box(account, box, setBox);
 

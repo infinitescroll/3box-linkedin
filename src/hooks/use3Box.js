@@ -15,15 +15,15 @@ const use3Box = (account, box, setBox) => {
   const getBox = async () => {
     if (box.loading && account) {
       const hasBox = await checkForBox(account);
-      if (!hasBox) setBox({ ...box, loading: false });
+      if (!hasBox) setBox({ ...box });
       else {
         const openedBox = await Box.openBox(
           account,
           window.web3.currentProvider
         );
         openedBox.onSyncDone(async () => {
-          const publicBox = await openedBox.public.all();
-          setBox({ ...publicBox, hasBox: true, loading: false });
+          const box = await openedBox.public.all();
+          setBox({ ...box });
         });
       }
     }
