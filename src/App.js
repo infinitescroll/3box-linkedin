@@ -6,6 +6,7 @@ import './App.css';
 
 import { useMetaMask, use3Box } from './hooks';
 import { sendToLinkedIn, getData } from './helpers';
+import Redirect from './Redirect';
 
 const App = () => {
   const account = useMetaMask();
@@ -21,27 +22,32 @@ const App = () => {
     setLocalProfile({ ...localProfile, [field]: value });
   };
 
-  const getLinkedIn = async linkedInCode => {
-    axios
-      .post(`http://localhost:8080/linkedin/auth?code=${linkedInCode}`)
-      .then(response => {
-        setLocalProfile({
-          ...localProfile,
-          fetchedLinkedIn: true,
-          name: response.data.name,
-        });
-      })
-      .catch(console.error);
-  };
-
   useEffect(() => {
-    const urlParams = window.location.href.split('=');
-    const linkedInCode = urlParams[1];
-    if (!localProfile.fetchedLinkedIn && urlParams[0].includes('code')) {
-      setLocalProfile({ ...localProfile, fetchedLinkedIn: true });
-      getLinkedIn(linkedInCode);
-    }
+    window.addEventListener('message', handlePopupMessage);
+    const cleanup = () =>
+      window.removeEventListener('message', handlePopupMessage);
+    return cleanup;
   });
+
+  const handlePopupMessage = async message => {
+    if (message.data.from !== 'popup') return;
+    if (message.data.name === 'code') {
+      const code = message.data.value;
+      const {
+        data: { token },
+      } = await axios.post(`http://localhost:8080/linkedin/auth?code=${code}`);
+
+      const { data } = await axios.get(
+        `http://localhost:8080/linkedin/user/access_token/${token}`
+      );
+
+      setLocalProfile({
+        ...localProfile,
+        fetchedLinkedIn: true,
+        name: data.name,
+      });
+    }
+  };
 
   const saveBox = async () => {
     // @TODO - this needs to be better - check the diff of what changed and only set the changes
@@ -108,7 +114,7 @@ const App = () => {
               >
                 <div style={{}}>
                   <Button
-                    onClick={sendToLinkedIn}
+                    onClick={() => sendToLinkedIn()}
                     style={{ marginBottom: '10px' }}
                     mode="strong"
                   >
@@ -128,6 +134,7 @@ const App = () => {
           )}
         </Card>
       </Main>
+      <Redirect />
     </div>
   );
 };
