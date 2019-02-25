@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Box from '3box';
 
 const checkForBox = async account => {
@@ -11,27 +11,32 @@ const checkForBox = async account => {
   }
 };
 
-const use3Box = (account, box, setBox) => {
+const use3Box = account => {
+  const [box, setBox] = useState({
+    name: '',
+    image: [''],
+    school: '',
+    fetchedBox: false,
+    loading: true,
+  });
+
   const getBox = async () => {
-    if (box.loading && account) {
-      const hasBox = await checkForBox(account);
-      if (!hasBox) setBox({ ...box });
-      else {
-        const openedBox = await Box.openBox(
-          account,
-          window.web3.currentProvider
-        );
-        openedBox.onSyncDone(async () => {
-          const box = await openedBox.public.all();
-          setBox({ ...box });
-        });
-      }
+    const hasBox = await checkForBox(account);
+    if (!hasBox) setBox({ ...box, fetchedBox: true, loading: false });
+    else {
+      const openedBox = await Box.openBox(account, window.web3.currentProvider);
+      openedBox.onSyncDone(async () => {
+        const box = await openedBox.public.all();
+        setBox({ ...box, fetchedBox: true, loading: false });
+      });
     }
   };
 
   useEffect(() => {
-    getBox();
+    if (account && !box.fetchedBox) getBox();
   });
+
+  return box;
 };
 
 export default use3Box;

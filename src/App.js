@@ -1,32 +1,59 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import Box from '3box';
 import { Main, AppBar, Card, Text, Field, Button } from '@aragon/ui';
+import axios from 'axios';
 import './App.css';
 
-import { useMetaMask, use3Box, useLinkedIn } from './hooks';
-import { sendToLinkedIn } from './helpers';
+import { useMetaMask, use3Box } from './hooks';
+import { sendToLinkedIn, getData } from './helpers';
 
 const App = () => {
-  const [account, setAccount] = useState('');
-
-  useMetaMask(setAccount);
-
-  const [box, setBox] = useState({});
-
-  use3Box(account, box, setBox);
+  const account = useMetaMask();
+  const box = use3Box(account);
+  const [localProfile, setLocalProfile] = useState({
+    fetchedLinkedIn: false,
+    name: '',
+    school: '',
+    image: [''],
+  });
 
   const updateLocalBox = (field, value) => {
-    setBox({ ...box, [field]: value });
+    setLocalProfile({ ...localProfile, [field]: value });
   };
 
-  const [auth, setAuth] = useState(false);
+  const getLinkedIn = async linkedInCode => {
+    axios
+      .post(`http://localhost:8080/linkedin/auth?code=${linkedInCode}`)
+      .then(response => {
+        setLocalProfile({
+          ...localProfile,
+          fetchedLinkedIn: true,
+          name: response.data.name,
+        });
+      })
+      .catch(console.error);
+  };
 
-  useLinkedIn(auth, setAuth, box, setBox);
+  useEffect(() => {
+    const urlParams = window.location.href.split('=');
+    const linkedInCode = urlParams[1];
+    if (!localProfile.fetchedLinkedIn && urlParams[0].includes('code')) {
+      setLocalProfile({ ...localProfile, fetchedLinkedIn: true });
+      getLinkedIn(linkedInCode);
+    }
+  });
 
   const saveBox = async () => {
+    // @TODO - this needs to be better - check the diff of what changed and only set the changes
     const openedBox = await Box.openBox(account, window.web3.currentProvider);
-    await openedBox.public.set('name', box.name);
+    const { name, image, school } = getData(localProfile, box);
+    console.log(openedBox, name);
+    await openedBox.public.set('name', name);
+    await openedBox.public.set('image', image);
+    await openedBox.public.set('school', school);
   };
+
+  const { name, image, school } = getData(localProfile, box);
 
   return (
     <div className="container">
@@ -36,7 +63,7 @@ const App = () => {
         </AppBar>
 
         <Card
-          height="400px"
+          height="450px"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -45,14 +72,14 @@ const App = () => {
         >
           {box.loading ? (
             <Text>Finding your 3box...</Text>
-          ) : box.hasBox ? (
+          ) : (
             <Fragment>
               <Field label="profile picture">
-                {box.image ? (
+                {image[0] ? (
                   <img
                     style={{ width: '100px' }}
                     src={`https://ipfs.infura.io/ipfs/${
-                      box.image[0].contentUrl['/']
+                      image[0].contentUrl['/']
                     }`}
                     alt=""
                   />
@@ -62,52 +89,43 @@ const App = () => {
               </Field>
               <Field label="name">
                 <input
-                  value={box.name || ''}
+                  value={name}
                   onChange={e => updateLocalBox('name', e.target.value)}
                 />
               </Field>
               <Field label="school">
                 <input
-                  value={box.school || ''}
+                  value={school}
                   onChange={e => updateLocalBox('school', e.target.value)}
                 />
               </Field>
-              <Button
-                onClick={saveBox}
-                style={{ marginBottom: '10px' }}
-                mode="strong"
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-around',
+                  height: '100%',
+                }}
               >
-                Save
-              </Button>
-            </Fragment>
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                height: '100%',
-              }}
-            >
-              <Text style={{ marginTop: '10px' }}>No box</Text>
-              <div style={{}}>
-                <Button
-                  onClick={sendToLinkedIn}
-                  style={{ marginBottom: '10px' }}
-                  mode="strong"
-                >
-                  Create a 3Box with LinkedIn
-                </Button>
-                <br />
-                <Button
-                  onClick={saveBox}
-                  style={{ marginBottom: '10px' }}
-                  mode="strong"
-                >
-                  Save
-                </Button>
+                <div style={{}}>
+                  <Button
+                    onClick={sendToLinkedIn}
+                    style={{ marginBottom: '10px' }}
+                    mode="strong"
+                  >
+                    Update 3Box with LinkedIn
+                  </Button>
+                  <br />
+                  <Button
+                    onClick={saveBox}
+                    style={{ marginBottom: '10px' }}
+                    mode="strong"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
-            </div>
+            </Fragment>
           )}
         </Card>
       </Main>
