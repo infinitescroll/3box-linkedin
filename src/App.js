@@ -47,7 +47,6 @@ const App = () => {
     // @TODO - this needs to be better - check the diff of what changed and only set the changes
     const openedBox = await Box.openBox(account, window.web3.currentProvider);
     const { name, image, school } = getData(localProfile, box);
-    console.log(openedBox, name);
     await openedBox.public.set('name', name);
     await openedBox.public.set('image', image);
     await openedBox.public.set('school', school);
